@@ -479,6 +479,9 @@ const KEY='hushfall.v1';
 let S = {mix:{}, master:.8, saved:[], fade:120, mixName:'', lang:''};
 try { const v=JSON.parse(localStorage.getItem(KEY)||'null'); if (v) S=Object.assign(S,v); } catch(e){}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+/* Android app: a native helper keeps sound going with the screen off and shows a Stop notification. */
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const Native = NATIVE && window.Capacitor.registerPlugin ? window.Capacitor.registerPlugin('Playback') : null;
 let playing=false, timer=null; // timer = {end, total}
 const live = {}; // id -> {out, srcs, tick, next}
 
@@ -621,6 +624,12 @@ function render(){
   renderMixes();
 }
 function media(){
+  if (Native){
+    try {
+      if (playing) Native.start({title:$('nowT').textContent, text:$('nowS').textContent, stopLabel:LANG==='ar'?'إيقاف':'Stop'});
+      else Native.stop();
+    } catch(e){}
+  }
   if (!('mediaSession' in navigator)) return;
   try {
     navigator.mediaSession.metadata = new MediaMetadata({title: $('nowT').textContent, artist:'Hushfall', album:'Sleep sounds'});
@@ -698,19 +707,20 @@ function applyLang(l){
   const root=document.documentElement; root.lang=l; root.dir = l==='ar' ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-t]').forEach(e=>e.textContent=t(e.dataset.t));
   document.querySelectorAll('[data-tp]').forEach(e=>e.placeholder=t(e.dataset.tp));
-  $('foot').innerHTML=t('foot');
+  $('foot').innerHTML = NATIVE ? t('foot').replace(/\s*<b>.*$/,'') : t('foot');
   $('langBtn').textContent=t('langBtn'); $('langBtn').setAttribute('aria-label',t('langLabel'));
   $('dimBtn').setAttribute('aria-label',t('dim')); $('master').setAttribute('aria-label',t('mainVol'));
   $('sheet').setAttribute('aria-label',t('sleepTimer')); $('timerBtn').setAttribute('aria-label',t('sleepTimer'));
   buildGrid(); render(); media();
 }
 $('langBtn').onclick=()=>applyLang(LANG==='ar'?'en':'ar');
+if (Native){ try { Native.addListener('stop', ()=>{ if (playing) pause(); }); } catch(e){} }
 for (const id in S.mix) if (!BY[id]) delete S.mix[id];
 sky();
 applyLang(S.lang || ((navigator.language||'').toLowerCase().startsWith('ar') ? 'ar' : 'en'));
 
 /* offline install (works when hosted on your own site; skipped inside previews) */
-if ('serviceWorker' in navigator && location.protocol==='https:') {
+if ('serviceWorker' in navigator && location.protocol==='https:' && !NATIVE) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 })();

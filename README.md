@@ -26,11 +26,27 @@ To try it on your computer:
 npx serve .
 ```
 
+## Android app
+
+The Android app wraps the same web app with [Capacitor](https://capacitorjs.com). It adds a small native helper (`PlaybackPlugin` and `PlaybackService`) that keeps the sound playing with the screen off and shows a notification with a Stop button. The back button sends the app to the background instead of closing it.
+
+Every push to `main` builds the app on GitHub Actions and publishes **Hushfall.apk** on the [android-latest release](../../releases/tag/android-latest). Open that page on your phone, download the APK and install it.
+
+To build it yourself you need Node 22, Java 21 and the Android SDK:
+
+```
+npm ci
+npm run sync
+cd android && ./gradlew assembleDebug
+```
+
 ## Files
 
 | File | Purpose |
 | --- | --- |
 | `index.html` | The whole app: UI, sound engine and timer |
+| `android/` | Android project (Capacitor) with the background playback service |
+| `scripts/copy-web.js` | Copies the web app into `www/` for the Android build |
 | `manifest.webmanifest` | App name, colors and icons for installing |
 | `sw.js` | Service worker that caches the app for offline use |
 | `icon.svg`, `icon-192.png`, `icon-512.png` | App icons |
