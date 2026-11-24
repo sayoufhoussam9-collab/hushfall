@@ -1,0 +1,8 @@
+{
+  "appId": "app.hushfall.sleep",
+  "appName": "Hushfall",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0b0e1f"
+  }
+}
